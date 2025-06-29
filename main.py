@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import warnings
+import json
 warnings.filterwarnings('ignore')
 
 # Configuration de la page
@@ -97,13 +98,13 @@ st.markdown("""
     }
     
     .section-header {
-        background: #43A640;
-        color: white;
+        background: #F8F8F8;
+        color: black;
         padding: 1rem 1.5rem;
         border-radius: 10px;
         margin: 2rem 0 1rem 0;
         font-weight: 600;
-        box-shadow: 0 4px 15px rgba(67, 166, 64, 0.3);
+        box-shadow: 0 4px 15px rgba(248, 248, 248, 0.3);
         font-family: 'Asap', sans-serif !important;
     }
     
@@ -479,22 +480,99 @@ def main():
         )
         habitants_categories['catégorie'] = habitants_categories['catégorie'].str.replace('impact_', '').str.title()
         
-        # Graphique en boîtes avec seaborn
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.boxplot(
-            data=habitants_categories,
-            x='logement_nb_habitants',
-            y='empreinte',
-            hue='catégorie',
-            palette="Set2",
-            ax=ax
+        # Graphique en violon avec fonction utilitaire
+        fig_violin_habitants = create_seaborn_violin_plot(
+            habitants_categories,
+            'logement_nb_habitants',
+            'empreinte',
+            'catégorie',
+            "Distribution par nombre d'habitants"
         )
-        ax.set_title("Distribution par nombre d'habitants", fontsize=16, fontweight='bold', pad=20)
-        ax.set_xlabel("Nombre d'habitants", fontweight='bold')
-        ax.set_ylabel("Empreinte (t CO₂)", fontweight='bold')
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        st.pyplot(fig)
+        st.pyplot(fig_violin_habitants)
+    
+    # Jointplot Seaborn : Analyse bivariée
+    st.markdown('<div class="section-header">🔀 Analyse bivariée : Jointplot</div>', unsafe_allow_html=True)
+    
+    fig_joint = sns.jointplot(
+        data=filtered_df,
+        x='transport_km_voiture',
+        y='impact_transport',
+        kind='hex',
+        height=7,
+        marginal_kws=dict(bins=20, fill=True)
+    )
+    fig_joint.fig.suptitle("Relation entre km parcourus en voiture et impact transport", fontsize=16, fontweight='bold', y=1.02)
+    st.pyplot(fig_joint.fig)
+    
+    # Choropleth Map: Impact total par commune de Bruxelles
+    st.markdown('<div class="section-header">🗺️ Carte choroplèthe : Impact par commune</div>', unsafe_allow_html=True)
+    
+    # --- NEW: Sélection du type de métrique et de l'agrégation ---
+    metric_options = {
+        'Impact total': 'impact_total',
+        'Logement': 'impact_logement',
+        'Transport': 'impact_transport',
+        'Alimentation': 'impact_alimentation',
+        'Vêtements': 'impact_vetements',
+        'Divertissement': 'impact_divertissement',
+    }
+    agg_options = {
+        'Somme': 'sum',
+        'Moyenne': 'mean',
+        'Médiane': 'median',
+    }
+    col_metric, col_agg = st.columns(2)
+    with col_metric:
+        selected_metric_label = st.selectbox(
+            "Sélectionnez la métrique à visualiser",
+            list(metric_options.keys()),
+            index=0
+        )
+        selected_metric = metric_options[selected_metric_label]
+    with col_agg:
+        selected_agg_label = st.selectbox(
+            "Type d'agrégation",
+            list(agg_options.keys()),
+            index=0
+        )
+        selected_agg = agg_options[selected_agg_label]
+    # --- END NEW ---
+    
+    with open("limites-administratives-des-communes-en-region-de-bruxelles-capitale.geojson", "r", encoding="utf-8") as f:
+        brussels_geojson = json.load(f)
+    
+    # Aggregate selected metric by city
+    if selected_agg == 'sum':
+        city_metric = filtered_df.groupby('city')[selected_metric].sum().reset_index()
+    elif selected_agg == 'mean':
+        city_metric = filtered_df.groupby('city')[selected_metric].mean().reset_index()
+    elif selected_agg == 'median':
+        city_metric = filtered_df.groupby('city')[selected_metric].median().reset_index()
+    else:
+        city_metric = filtered_df.groupby('city')[selected_metric].sum().reset_index()
+    
+    # Plotly Choropleth
+    fig_choropleth = px.choropleth_mapbox(
+        city_metric,
+        geojson=brussels_geojson,
+        locations='city',
+        featureidkey="properties.name_fr",
+        color=selected_metric,
+        color_continuous_scale="YlOrRd",
+        mapbox_style="carto-positron",
+        zoom=10.5,
+        center={"lat": 50.8503, "lon": 4.3517},
+        opacity=0.8,
+        labels={selected_metric: f"{selected_metric_label} ({'t CO₂'})"}
+    )
+    # Remove borders for a modern look
+    fig_choropleth.update_traces(marker_line_width=0)
+    fig_choropleth.update_layout(
+        margin={"r":0,"t":40,"l":0,"b":0},
+        title_text=f"{selected_metric_label} par commune de Bruxelles ({selected_agg_label})",
+        height=700
+    )
+    st.plotly_chart(fig_choropleth, use_container_width=True)
     
     # Matrice de corrélation
     st.markdown('<div class="section-header">🔗 Matrice de corrélation</div>', unsafe_allow_html=True)
