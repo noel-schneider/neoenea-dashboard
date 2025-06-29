@@ -38,6 +38,32 @@ def generate_carbon_footprint_data(n_samples=1000):
         "1210"   # Saint-Josse-ten-Noode
     ]
 
+    # Mapping des codes postaux vers les noms de villes
+    code_to_city = {
+        "1000": "Bruxelles (centre-ville)",
+        "1020": "Bruxelles (Laeken)",
+        "1030": "Schaerbeek",
+        "1040": "Etterbeek",
+        "1050": "Ixelles",
+        "1060": "Saint-Gilles",
+        "1070": "Anderlecht",
+        "1080": "Molenbeek-Saint-Jean",
+        "1081": "Koekelberg",
+        "1082": "Berchem-Sainte-Agathe",
+        "1083": "Ganshoren",
+        "1090": "Jette",
+        "1120": "Neder-Over-Heembeek",
+        "1130": "Haren",
+        "1140": "Evere",
+        "1150": "Woluwe-Saint-Pierre",
+        "1160": "Auderghem",
+        "1170": "Watermael-Boitsfort",
+        "1180": "Uccle",
+        "1190": "Forest",
+        "1200": "Woluwe-Saint-Lambert",
+        "1210": "Saint-Josse-ten-Noode"
+    }
+
     # Listes de valeurs réalistes
     # Pondération pour rendre certains codes plus fréquents
     weights = [10, 8, 7, 7, 8, 6, 6, 5, 2, 2, 2, 4, 2, 2, 3, 3, 3, 3, 5, 4, 4, 2]
@@ -167,6 +193,7 @@ def generate_carbon_footprint_data(n_samples=1000):
             # Informations générales (sans préfixe)
             'date_participation': date_participation.strftime('%Y-%m-%d'),
             'code_postal': code_postal,
+            'city': code_to_city.get(code_postal, "Inconnu"),
             'empreinte_moyenne': empreinte_moyenne,
             
             # SE LOGER (préfixe: logement_)

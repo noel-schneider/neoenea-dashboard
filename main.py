@@ -21,20 +21,43 @@ st.set_page_config(
 # Style CSS personnalisé
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Asap:wght@300;400;600;700&display=swap');
+    
+    * {
+        font-family: 'Asap', sans-serif !important;
+    }
     
     .main {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Asap', sans-serif !important;
+    }
+    
+    .stApp {
+        font-family: 'Asap', sans-serif !important;
+    }
+    
+    .stMarkdown {
+        font-family: 'Asap', sans-serif !important;
+    }
+    
+    .stText {
+        font-family: 'Asap', sans-serif !important;
+    }
+    
+    .stSelectbox {
+        font-family: 'Asap', sans-serif !important;
+    }
+    
+    .stMultiselect {
+        font-family: 'Asap', sans-serif !important;
     }
     
     .big-title {
         font-size: 3.5rem;
         font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #43A640;
         text-align: center;
         margin-bottom: 0.5rem;
+        font-family: 'Asap', sans-serif !important;
     }
     
     .subtitle {
@@ -43,60 +66,128 @@ st.markdown("""
         text-align: center;
         margin-bottom: 2rem;
         font-weight: 300;
+        font-family: 'Asap', sans-serif !important;
     }
     
     .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #FFF286;
         padding: 1.2rem;
         border-radius: 15px;
-        color: white;
+        color: black;
         text-align: center;
         margin: 0.5rem 0;
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        box-shadow: 0 8px 32px rgba(67, 166, 64, 0.37);
         backdrop-filter: blur(4px);
         border: 1px solid rgba(255, 255, 255, 0.18);
+        font-family: 'Asap', sans-serif !important;
     }
     
     .metric-value {
         font-size: 2rem;
         font-weight: 700;
         margin: 0;
+        font-family: 'Asap', sans-serif !important;
     }
     
     .metric-label {
         font-size: 0.9rem;
         opacity: 0.9;
         margin-top: 0.5rem;
+        font-family: 'Asap', sans-serif !important;
     }
     
     .section-header {
-        background: linear-gradient(90deg, #4CAF50, #45a049);
+        background: #43A640;
         color: white;
         padding: 1rem 1.5rem;
         border-radius: 10px;
         margin: 2rem 0 1rem 0;
         font-weight: 600;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        box-shadow: 0 4px 15px rgba(67, 166, 64, 0.3);
+        font-family: 'Asap', sans-serif !important;
     }
     
     .insight-box {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: #FFF286;
         padding: 1.5rem;
         border-radius: 15px;
-        color: white;
+        color: black;
         margin: 1rem 0;
-        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
+        box-shadow: 0 8px 32px rgba(255, 242, 134, 0.3);
+        font-family: 'Asap', sans-serif !important;
     }
     
     .stSelectbox > div > div > select {
-        border: 2px solid #667eea;
+        border: 2px solid #43A640;
         border-radius: 10px;
         font-weight: 500;
+        font-family: 'Asap', sans-serif !important;
     }
     
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1lcbmhc {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-17eq0hr {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1rs6os {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1cypcdb {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1d391kg .css-1lcbmhc {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1d391kg .css-17eq0hr {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1d391kg .css-1rs6os {
+        background-color: #FFF286 !important;
+    }
+    
+    .css-1d391kg .css-1cypcdb {
+        background-color: #FFF286 !important;
+    }
+    
+    /* Additional sidebar selectors for better coverage */
+    [data-testid="stSidebar"] {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] > div {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] .css-1d391kg {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] .css-1lcbmhc {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] .css-17eq0hr {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] .css-1rs6os {
+        background-color: #FFF286 !important;
+    }
+    
+    [data-testid="stSidebar"] .css-1cypcdb {
+        background-color: #FFF286 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -115,17 +206,17 @@ sns.set_style("whitegrid", {
 
 # Configuration des couleurs
 COLORS = {
-    'primary': '#667eea',
-    'secondary': '#764ba2',
-    'success': '#4CAF50',
-    'warning': '#FF9800',
-    'danger': '#f5576c',
-    'info': '#2196F3',
+    'primary': '#43A640',
+    'secondary': '#FFF286',
+    'success': '#43A640',
+    'warning': '#FFF286',
+    'danger': '#FF6B6B',
+    'info': '#4ECDC4',
     'light': '#f8f9fa',
     'dark': '#343a40'
 }
 
-CATEGORY_COLORS = ['#667eea', '#764ba2', '#f093fb', '#4CAF50', '#FF9800']
+CATEGORY_COLORS = ['#43A640', '#FFF286', '#FF6B6B', '#4ECDC4', '#A8E6CF']
 
 @st.cache_data
 def load_data():
@@ -226,6 +317,10 @@ def create_seaborn_heatmap(corr_matrix, title=""):
     """Crée une heatmap de corrélation avec seaborn"""
     fig, ax = plt.subplots(figsize=(12, 10))
     
+    # Set yellow background
+    fig.patch.set_facecolor('#FFF286')
+    ax.set_facecolor('#FFF286')
+    
     mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
     
     sns.heatmap(
@@ -256,30 +351,42 @@ def main():
     # Sidebar avec style
     st.sidebar.markdown("## 🎛️ Filtres de données")
     
+    selected_city = st.sidebar.multiselect(
+        "🏙️ Ville",
+        sorted(df['city'].unique())
+    )
+    
     selected_logement_type = st.sidebar.multiselect(
         "🏠 Type de logement", 
-        df['logement_type'].unique(), 
-        default=df['logement_type'].unique()
+        df['logement_type'].unique()
     )
     
     selected_nb_habitants = st.sidebar.multiselect(
         "👥 Nombre d'habitants", 
-        sorted(df['logement_nb_habitants'].unique()), 
-        default=sorted(df['logement_nb_habitants'].unique())
+        sorted(df['logement_nb_habitants'].unique())
     )
     
     selected_type_chauffage = st.sidebar.multiselect(
         "🔥 Type de chauffage", 
-        df['logement_type_chauffage'].unique(), 
-        default=df['logement_type_chauffage'].unique()
+        df['logement_type_chauffage'].unique()
     )
     
     # Filtrage des données
-    filtered_df = df[
-        (df['logement_type'].isin(selected_logement_type)) &
-        (df['logement_nb_habitants'].isin(selected_nb_habitants)) &
-        (df['logement_type_chauffage'].isin(selected_type_chauffage))
-    ]
+    mask = pd.Series([True] * len(df), index=df.index)
+    
+    if len(selected_logement_type) > 0:
+        mask &= df['logement_type'].isin(selected_logement_type)
+    
+    if len(selected_nb_habitants) > 0:
+        mask &= df['logement_nb_habitants'].isin(selected_nb_habitants)
+    
+    if len(selected_type_chauffage) > 0:
+        mask &= df['logement_type_chauffage'].isin(selected_type_chauffage)
+    
+    if len(selected_city) > 0:
+        mask &= df['city'].isin(selected_city)
+    
+    filtered_df = df[mask]
     
     # Métriques principales avec style personnalisé
     st.markdown('<div class="section-header">📊 Métriques principales</div>', unsafe_allow_html=True)
