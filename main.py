@@ -9,6 +9,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import warnings
 import json
+import matplotlib.colors as mcolors
+import matplotlib.cm as cm
 warnings.filterwarnings('ignore')
 
 # Configuration de la page
@@ -253,39 +255,33 @@ def create_matplotlib_pie_chart(data, title=""):
     return fig
 
 def create_matplotlib_bar_chart(data, title="", horizontal=True, color_gradient=True):
-    """Crée un graphique en barres avec matplotlib"""
+    """Crée un graphique en barres avec matplotlib, utilisant une échelle continue basée sur la couleur principale de l'app."""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Use CATEGORY_COLORS for bars, repeat if needed
-    colors = CATEGORY_COLORS * (len(data) // len(CATEGORY_COLORS) + 1)
-    colors = colors[:len(data)]
+    # Create a continuous colormap from white to the main primary color
+    primary_color = COLORS['primary']
+    cmap = mcolors.LinearSegmentedColormap.from_list('main_gradient', ["#F4F8F3", primary_color])
+    norm = mcolors.Normalize(vmin=min(data.values), vmax=max(data.values))
+    bar_colors = [cmap(norm(val)) for val in data.values]
     
     if horizontal:
-        bars = ax.barh(range(len(data)), data.values, color=colors)
+        bars = ax.barh(range(len(data)), data.values, color=bar_colors)
         ax.set_yticks(range(len(data)))
         ax.set_yticklabels(data.index)
         ax.set_xlabel('Tonnes CO₂/an', fontweight='bold')
-        
-        # Ajouter les valeurs sur les barres
         for i, (bar, value) in enumerate(zip(bars, data.values)):
-            ax.text(value + 0.1, i, f'{value:.2f}', 
-                   va='center', ha='left', fontweight='bold')
+            ax.text(value + 0.1, i, f'{value:.2f}', va='center', ha='left', fontweight='bold')
     else:
-        bars = ax.bar(range(len(data)), data.values, color=colors)
+        bars = ax.bar(range(len(data)), data.values, color=bar_colors)
         ax.set_xticks(range(len(data)))
         ax.set_xticklabels(data.index, rotation=45, ha='right')
         ax.set_ylabel('Tonnes CO₂/an', fontweight='bold')
-        
-        # Ajouter les valeurs sur les barres
         for bar, value in zip(bars, data.values):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
-                   f'{value:.2f}', ha='center', va='bottom', fontweight='bold')
-    
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, f'{value:.2f}', ha='center', va='bottom', fontweight='bold')
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
     ax.grid(True, alpha=0.3)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    
     plt.tight_layout()
     return fig
 
