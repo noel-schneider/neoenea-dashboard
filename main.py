@@ -81,6 +81,7 @@ st.markdown("""
         backdrop-filter: blur(4px);
         border: 1px solid rgba(255, 255, 255, 0.18);
         font-family: 'Asap', sans-serif !important;
+        min-height: 140px;
     }
     
     .metric-value {
@@ -225,29 +226,28 @@ def load_data():
     return df
 
 def create_matplotlib_pie_chart(data, title=""):
-    """Crée un graphique en secteurs avec matplotlib"""
+    """Crée un graphique en anneau (donut chart) avec matplotlib"""
     fig, ax = plt.subplots(figsize=(6, 5))
-    
-    # Couleurs dégradées
-    colors = ['#667eea', '#764ba2', '#f093fb', '#4CAF50', '#FF9800']
+    # Use global CATEGORY_COLORS for pie slices
+    colors = CATEGORY_COLORS * (len(data) // len(CATEGORY_COLORS) + 1)
     
     wedges, texts, autotexts = ax.pie(
         data.values(), 
         labels=data.keys(), 
         autopct='%1.1f%%',
-        colors=colors,
+        colors=colors[:len(data)],
         startangle=90,
         explode=[0.05] * len(data),  # Sépare légèrement les sections
-        shadow=True,
-        textprops={'fontsize': 12, 'fontweight': 'bold'}
+        shadow=False,
+        textprops={'fontsize': 12, 'fontweight': 'bold'},
+        wedgeprops={'width': 0.4},  # Donut chart effect
+        pctdistance=0.8  # Place numbers on the ring
     )
-    
     # Style moderne
     for autotext in autotexts:
         autotext.set_color('white')
         autotext.set_fontweight('bold')
         autotext.set_fontsize(11)
-    
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
     plt.tight_layout()
     return fig
@@ -256,11 +256,9 @@ def create_matplotlib_bar_chart(data, title="", horizontal=True, color_gradient=
     """Crée un graphique en barres avec matplotlib"""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    if color_gradient:
-        # Gradient de couleurs basé sur les valeurs
-        colors = plt.cm.viridis(np.linspace(0, 1, len(data)))
-    else:
-        colors = [COLORS['primary']] * len(data)
+    # Use CATEGORY_COLORS for bars, repeat if needed
+    colors = CATEGORY_COLORS * (len(data) // len(CATEGORY_COLORS) + 1)
+    colors = colors[:len(data)]
     
     if horizontal:
         bars = ax.barh(range(len(data)), data.values, color=colors)
@@ -392,15 +390,14 @@ def main():
     # GLOBAL ANALYTICS (TOP)
     # =====================
     st.markdown('<div class="section-header">📊 Métriques principales</div>', unsafe_allow_html=True)
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     metrics = [
         ("📝", "Réponses", f"{len(filtered_df):,}"),
         ("🌍", "Empreinte moyenne", f"{filtered_df['impact_total'].mean():.2f} t CO₂"),
-        ("🏠", "Types logement", f"{filtered_df['logement_type'].nunique()}"),
-        ("🔥", "Types chauffage", f"{filtered_df['logement_type_chauffage'].nunique()}"),
-        ("📐", "Superficie moy.", f"{filtered_df['logement_superficie_m2'].mean():.0f} m²")
+        ("🔸", "Empreinte médiane", f"{filtered_df['impact_total'].median():.2f} t CO₂"),
+        ("🏙️", "Communes représentées", f"{filtered_df['city'].nunique()}") ,
     ]
-    for col, (icon, label, value) in zip([col1, col2, col3, col4, col5], metrics):
+    for col, (icon, label, value) in zip([col1, col2, col3, col4], metrics):
         with col:
             st.markdown(f'''
             <div class="metric-card">
@@ -566,16 +563,32 @@ def main():
     </div>
     ''', unsafe_allow_html=True)
 
-    # Data Preview
-    st.markdown('<div class="section-header">📋 Aperçu des données</div>', unsafe_allow_html=True)
-    st.dataframe(filtered_df.head(50), use_container_width=True)
-
     # =====================
     # DETAILED ANALYTICS (END)
     # =====================
 
     # --- HOUSING ---
     st.markdown('<div class="section-header">🏠 Détail Logement</div>', unsafe_allow_html=True)
+    # Mini-metrics for Housing
+    colh1, colh2 = st.columns(2)
+    most_common_isolation = filtered_df['logement_isolation'].mode()[0]
+    avg_home_size_per_person = filtered_df['logement_superficie_m2'].mean() / filtered_df['logement_nb_habitants'].mean()
+    with colh1:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">🧱</div>
+            <div class="metric-value">{most_common_isolation}</div>
+            <div class="metric-label">Isolation la plus courante</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    with colh2:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">📏</div>
+            <div class="metric-value">{avg_home_size_per_person:.1f} m²/pers</div>
+            <div class="metric-label">Superficie moyenne par personne</div>
+        </div>
+        ''', unsafe_allow_html=True)
     st.markdown("#### 📊 Impact par type de logement")
     logement_avg = filtered_df.groupby('logement_type')['impact_total'].mean().sort_values(ascending=True)
     fig_bar = create_matplotlib_bar_chart(
@@ -587,6 +600,17 @@ def main():
 
     # --- TRANSPORT ---
     st.markdown('<div class="section-header">🚗 Détail Transport</div>', unsafe_allow_html=True)
+    # Mini-metric for Transport
+    colt1 = st.columns(1)[0]
+    most_common_inhabitants = filtered_df['logement_nb_habitants'].mode()[0]
+    with colt1:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">👥</div>
+            <div class="metric-value">{most_common_inhabitants}</div>
+            <div class="metric-label">Nombre d'habitants le plus courant</div>
+        </div>
+        ''', unsafe_allow_html=True)
     st.markdown("#### 🔀 Relation entre km parcourus en voiture et impact transport")
     fig_joint = sns.jointplot(
         data=filtered_df,
@@ -613,6 +637,17 @@ def main():
 
     # --- FOOD ---
     st.markdown('<div class="section-header">🍽️ Détail Alimentation</div>', unsafe_allow_html=True)
+    # Mini-metric for Food
+    colf1 = st.columns(1)[0]
+    avg_meat_meals = filtered_df['alimentation_repas_viande_semaine'].mean()
+    with colf1:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">🍖</div>
+            <div class="metric-value">{avg_meat_meals:.1f}</div>
+            <div class="metric-label">Repas viande/semaine (moyenne)</div>
+        </div>
+        ''', unsafe_allow_html=True)
     st.markdown("#### 🍖 Impact alimentation selon repas viande/semaine")
     food_impact = filtered_df.groupby('alimentation_repas_viande_semaine')['impact_alimentation'].mean().sort_index()
     fig_food = create_matplotlib_bar_chart(
@@ -624,14 +659,47 @@ def main():
 
     # --- ENTERTAINMENT ---
     st.markdown('<div class="section-header">🎮 Détail Divertissement</div>', unsafe_allow_html=True)
+    # Mini-metrics for Entertainment
+    cole1, cole2 = st.columns(2)
+    most_common_quality = filtered_df['divertissement_qualite_video'].mode()[0]
+    avg_devices = filtered_df['divertissement_appareils_numeriques'].mean()
+    with cole1:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">📺</div>
+            <div class="metric-value">{most_common_quality}</div>
+            <div class="metric-label">Qualité vidéo la plus courante</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    with cole2:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div style="font-size: 1.5rem;">💻</div>
+            <div class="metric-value">{avg_devices:.1f}</div>
+            <div class="metric-label">Appareils numériques (moyenne)</div>
+        </div>
+        ''', unsafe_allow_html=True)
     st.markdown("#### 📺 Impact divertissement par qualité vidéo")
     entertainment_impact = filtered_df.groupby('divertissement_qualite_video')['impact_divertissement'].mean().sort_index()
     fig_entertainment = create_matplotlib_bar_chart(
         entertainment_impact,
         "Impact divertissement moyen par qualité vidéo",
-        horizontal=False
+        horizontal=True
     )
     st.pyplot(fig_entertainment)
 
+    # Bar chart: Impact by daily video hours
+    st.markdown("#### ⏰ Impact divertissement selon les heures de vidéo par jour")
+    entertainment_by_hours = filtered_df.groupby('divertissement_heures_video_jour')['impact_divertissement'].mean()
+    fig_hours = create_matplotlib_bar_chart(
+        entertainment_by_hours,
+        "Impact moyen selon les heures de vidéo par jour",
+        horizontal=True
+    )
+    st.pyplot(fig_hours)
+
+    # Data Preview
+    st.markdown('<div class="section-header">📋 Aperçu des données</div>', unsafe_allow_html=True)
+    st.dataframe(filtered_df.head(50), use_container_width=True)
 if __name__ == "__main__":
     main()
