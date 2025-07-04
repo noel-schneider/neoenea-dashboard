@@ -226,7 +226,7 @@ def load_data():
 
 def create_matplotlib_pie_chart(data, title=""):
     """Crée un graphique en secteurs avec matplotlib"""
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(6, 5))
     
     # Couleurs dégradées
     colors = ['#667eea', '#764ba2', '#f093fb', '#4CAF50', '#FF9800']
@@ -318,10 +318,6 @@ def create_seaborn_heatmap(corr_matrix, title=""):
     """Crée une heatmap de corrélation avec seaborn"""
     fig, ax = plt.subplots(figsize=(12, 10))
     
-    # Set yellow background
-    fig.patch.set_facecolor('#FFF286')
-    ax.set_facecolor('#FFF286')
-    
     mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
     
     sns.heatmap(
@@ -389,11 +385,14 @@ def main():
     
     filtered_df = df[mask]
     
-    # Métriques principales avec style personnalisé
+    # Harmonize city names for the choropleth map
+    filtered_df['city'] = filtered_df['city'].replace({'Bruxelles (centre-ville)': 'Bruxelles'})
+    
+    # =====================
+    # GLOBAL ANALYTICS (TOP)
+    # =====================
     st.markdown('<div class="section-header">📊 Métriques principales</div>', unsafe_allow_html=True)
-    
     col1, col2, col3, col4, col5 = st.columns(5)
-    
     metrics = [
         ("📝", "Réponses", f"{len(filtered_df):,}"),
         ("🌍", "Empreinte moyenne", f"{filtered_df['impact_total'].mean():.2f} t CO₂"),
@@ -401,7 +400,6 @@ def main():
         ("🔥", "Types chauffage", f"{filtered_df['logement_type_chauffage'].nunique()}"),
         ("📐", "Superficie moy.", f"{filtered_df['logement_superficie_m2'].mean():.0f} m²")
     ]
-    
     for col, (icon, label, value) in zip([col1, col2, col3, col4, col5], metrics):
         with col:
             st.markdown(f'''
@@ -411,102 +409,10 @@ def main():
                 <div class="metric-label">{label}</div>
             </div>
             ''', unsafe_allow_html=True)
-    
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Graphiques principaux
-    st.markdown('<div class="section-header">📈 Analyses principales</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 🥧 Répartition par catégorie")
-        category_means = {
-            'Logement': filtered_df['impact_logement'].mean(),
-            'Transport': filtered_df['impact_transport'].mean(),
-            'Alimentation': filtered_df['impact_alimentation'].mean(),
-            'Vêtements': filtered_df['impact_vetements'].mean(),
-            'Divertissement': filtered_df['impact_divertissement'].mean()
-        }
-        
-        fig_pie = create_matplotlib_pie_chart(
-            category_means, 
-            "Répartition moyenne de l'empreinte carbone"
-        )
-        st.pyplot(fig_pie)
-    
-    with col2:
-        st.markdown("#### 📊 Impact par type de logement")
-        logement_avg = filtered_df.groupby('logement_type')['impact_total'].mean().sort_values(ascending=True)
-        
-        fig_bar = create_matplotlib_bar_chart(
-            logement_avg,
-            "Empreinte totale moyenne par type de logement",
-            horizontal=True
-        )
-        st.pyplot(fig_bar)
-    
-    # Analyses détaillées
-    st.markdown('<div class="section-header">🔍 Analyses détaillées</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 🔥 Distribution par type de chauffage")
-        chauffage_categories = filtered_df.melt(
-            id_vars=['logement_type_chauffage'],
-            value_vars=['impact_logement', 'impact_transport', 'impact_alimentation', 'impact_vetements', 'impact_divertissement'],
-            var_name='catégorie',
-            value_name='empreinte'
-        )
-        chauffage_categories['catégorie'] = chauffage_categories['catégorie'].str.replace('impact_', '').str.title()
-        
-        fig_violin = create_seaborn_violin_plot(
-            chauffage_categories,
-            'logement_type_chauffage',
-            'empreinte',
-            'catégorie',
-            "Distribution par type de chauffage"
-        )
-        st.pyplot(fig_violin)
-    
-    with col2:
-        st.markdown("#### 👥 Distribution par nombre d'habitants")
-        habitants_categories = filtered_df.melt(
-            id_vars=['logement_nb_habitants'],
-            value_vars=['impact_logement', 'impact_transport', 'impact_alimentation', 'impact_vetements', 'impact_divertissement'],
-            var_name='catégorie',
-            value_name='empreinte'
-        )
-        habitants_categories['catégorie'] = habitants_categories['catégorie'].str.replace('impact_', '').str.title()
-        
-        # Graphique en violon avec fonction utilitaire
-        fig_violin_habitants = create_seaborn_violin_plot(
-            habitants_categories,
-            'logement_nb_habitants',
-            'empreinte',
-            'catégorie',
-            "Distribution par nombre d'habitants"
-        )
-        st.pyplot(fig_violin_habitants)
-    
-    # Jointplot Seaborn : Analyse bivariée
-    st.markdown('<div class="section-header">🔀 Analyse bivariée : Jointplot</div>', unsafe_allow_html=True)
-    
-    fig_joint = sns.jointplot(
-        data=filtered_df,
-        x='transport_km_voiture',
-        y='impact_transport',
-        kind='hex',
-        height=7,
-        marginal_kws=dict(bins=20, fill=True)
-    )
-    fig_joint.fig.suptitle("Relation entre km parcourus en voiture et impact transport", fontsize=16, fontweight='bold', y=1.02)
-    st.pyplot(fig_joint.fig)
-    
-    # Choropleth Map: Impact total par commune de Bruxelles
+
+    # Choropleth Map
     st.markdown('<div class="section-header">🗺️ Carte choroplèthe : Impact par commune</div>', unsafe_allow_html=True)
-    
     # --- NEW: Sélection du type de métrique et de l'agrégation ---
     metric_options = {
         'Impact total': 'impact_total',
@@ -517,8 +423,8 @@ def main():
         'Divertissement': 'impact_divertissement',
     }
     agg_options = {
-        'Somme': 'sum',
         'Moyenne': 'mean',
+        'Somme': 'sum',
         'Médiane': 'median',
     }
     col_metric, col_agg = st.columns(2)
@@ -574,31 +480,41 @@ def main():
     )
     st.plotly_chart(fig_choropleth, use_container_width=True)
     
-    # Matrice de corrélation
+    # Pie Chart: Répartition par catégorie
+    st.markdown('<div class="section-header">🥧 Répartition par catégorie</div>', unsafe_allow_html=True)
+    category_means = {
+        'Logement': filtered_df['impact_logement'].mean(),
+        'Transport': filtered_df['impact_transport'].mean(),
+        'Alimentation': filtered_df['impact_alimentation'].mean(),
+        'Vêtements': filtered_df['impact_vetements'].mean(),
+        'Divertissement': filtered_df['impact_divertissement'].mean()
+    }
+    fig_pie = create_matplotlib_pie_chart(
+        category_means, 
+        "Répartition moyenne de l'empreinte carbone"
+    )
+    st.pyplot(fig_pie)
+
+    # Correlation Matrix
     st.markdown('<div class="section-header">🔗 Matrice de corrélation</div>', unsafe_allow_html=True)
-    
-    # Sélectionner les colonnes numériques pertinentes
     numeric_cols = [
         'logement_superficie_m2', 'logement_nb_habitants', 'logement_temperature_chauffage',
         'transport_km_voiture', 'transport_nb_vols_avion', 'alimentation_repas_viande_semaine',
         'impact_logement', 'impact_transport', 'impact_alimentation', 'impact_vetements', 
         'impact_divertissement', 'impact_total'
     ]
-    
     corr_matrix = filtered_df[numeric_cols].corr()
     fig_heatmap = create_seaborn_heatmap(corr_matrix, "Corrélations entre variables")
     st.pyplot(fig_heatmap)
-    
-    # Chronologie (on garde Plotly pour l'interactivité)
+
+    # Timeline
     st.markdown('<div class="section-header">📅 Évolution temporelle</div>', unsafe_allow_html=True)
-    
     filtered_df['mois_participation'] = filtered_df['date_participation'].dt.to_period('M')
     monthly_responses = filtered_df.groupby('mois_participation').agg({
         'impact_total': 'mean',
         'date_participation': 'count'
     }).reset_index()
     monthly_responses['mois_participation'] = monthly_responses['mois_participation'].astype(str)
-    
     fig_timeline = make_subplots(specs=[[{"secondary_y": True}]])
     fig_timeline.add_trace(
         go.Scatter(
@@ -627,19 +543,16 @@ def main():
         height=500
     )
     st.plotly_chart(fig_timeline, use_container_width=True)
-    
-    # Insights avec style
+
+    # Key Insights
     st.markdown('<div class="section-header">💡 Insights clés</div>', unsafe_allow_html=True)
-    
     max_logement = filtered_df.groupby('logement_type')['impact_total'].mean()
     min_logement = max_logement.min()
     max_logement_name = max_logement.idxmax()
     max_logement_value = max_logement.max()
     min_logement_name = max_logement.idxmin()
-    
     dominant_category = max(category_means, key=category_means.get)
     dominant_percentage = category_means[dominant_category] / sum(category_means.values()) * 100
-    
     st.markdown(f'''
     <div class="insight-box">
         <h3>🎯 Faits saillants</h3>
@@ -652,10 +565,73 @@ def main():
         </ul>
     </div>
     ''', unsafe_allow_html=True)
-    
-    # Aperçu des données
+
+    # Data Preview
     st.markdown('<div class="section-header">📋 Aperçu des données</div>', unsafe_allow_html=True)
     st.dataframe(filtered_df.head(50), use_container_width=True)
+
+    # =====================
+    # DETAILED ANALYTICS (END)
+    # =====================
+
+    # --- HOUSING ---
+    st.markdown('<div class="section-header">🏠 Détail Logement</div>', unsafe_allow_html=True)
+    st.markdown("#### 📊 Impact par type de logement")
+    logement_avg = filtered_df.groupby('logement_type')['impact_total'].mean().sort_values(ascending=True)
+    fig_bar = create_matplotlib_bar_chart(
+        logement_avg,
+        "Empreinte totale moyenne par type de logement",
+        horizontal=True
+    )
+    st.pyplot(fig_bar)
+
+    # --- TRANSPORT ---
+    st.markdown('<div class="section-header">🚗 Détail Transport</div>', unsafe_allow_html=True)
+    st.markdown("#### 🔀 Relation entre km parcourus en voiture et impact transport")
+    fig_joint = sns.jointplot(
+        data=filtered_df,
+        x='transport_km_voiture',
+        y='impact_transport',
+        kind='hex',
+        height=7,
+        marginal_kws=dict(bins=20, fill=True)
+    )
+    fig_joint.fig.suptitle("Relation entre km parcourus en voiture et impact transport", fontsize=16, fontweight='bold', y=1.02)
+    st.pyplot(fig_joint.fig)
+
+    # --- MOBILITY ---
+    st.markdown('<div class="section-header">🚲 Détail Mobilité</div>', unsafe_allow_html=True)
+    st.markdown("#### 🚲 Impact moyen par mode de transport doux")
+    mobility_modes = ['transport_km_velo', 'transport_km_velo_electrique', 'transport_km_trottinette']
+    mobility_impact = filtered_df[mobility_modes].mean()
+    fig_mobility = create_matplotlib_bar_chart(
+        mobility_impact,
+        "Distance moyenne annuelle par mode de transport doux (km)",
+        horizontal=True
+    )
+    st.pyplot(fig_mobility)
+
+    # --- FOOD ---
+    st.markdown('<div class="section-header">🍽️ Détail Alimentation</div>', unsafe_allow_html=True)
+    st.markdown("#### 🍖 Impact alimentation selon repas viande/semaine")
+    food_impact = filtered_df.groupby('alimentation_repas_viande_semaine')['impact_alimentation'].mean().sort_index()
+    fig_food = create_matplotlib_bar_chart(
+        food_impact,
+        "Impact alimentation moyen selon nombre de repas viande/semaine",
+        horizontal=False
+    )
+    st.pyplot(fig_food)
+
+    # --- ENTERTAINMENT ---
+    st.markdown('<div class="section-header">🎮 Détail Divertissement</div>', unsafe_allow_html=True)
+    st.markdown("#### 📺 Impact divertissement par qualité vidéo")
+    entertainment_impact = filtered_df.groupby('divertissement_qualite_video')['impact_divertissement'].mean().sort_index()
+    fig_entertainment = create_matplotlib_bar_chart(
+        entertainment_impact,
+        "Impact divertissement moyen par qualité vidéo",
+        horizontal=False
+    )
+    st.pyplot(fig_entertainment)
 
 if __name__ == "__main__":
     main()
